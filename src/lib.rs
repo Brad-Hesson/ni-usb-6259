@@ -1,2 +1,2 @@
-mod daqmx;
-mod tasks;
+pub mod daqmx;
+pub mod tasks;
