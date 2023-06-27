@@ -55,6 +55,8 @@ impl<const N: usize> FiniteAquisitionTask<N> {
 /// A task that generates a repeating waveform on the specified channel.
 pub struct WaveGenTask {
     task: Task,
+    waveform: Vec<f64>,
+    waveform_period: Duration,
 }
 impl WaveGenTask {
     /// Creates a new WaveGenTask.
@@ -64,13 +66,36 @@ impl WaveGenTask {
     pub fn new(name: &str, channel: &str) -> Result<Self> {
         let task = Task::new(name)?;
         task.create_voltage_output_channel(channel, "", -10., 10.)?;
-        Ok(Self { task })
+        Ok(Self {
+            task,
+            waveform: vec![],
+            waveform_period: Duration::from_secs(1),
+        })
     }
     /// Sets the waveform that is generated on the specified channel.
     ///
     /// * `buffer`: The buffer data that will be written to the device and generated on the specified channel.
     /// * `waveform_period`: The period of the generated waveform.
-    pub fn set_waveform(&self, buffer: &[f64], waveform_period: Duration) -> Result<()> {
+    pub fn set_waveform(&mut self, buffer: &[f64], waveform_period: Duration) {
+        self.waveform = buffer.to_vec();
+        self.waveform_period = waveform_period;
+    }
+    /// Starts generating the waveform.
+    pub fn start(&self) -> Result<()> {
+        self.download_waveform(&self.waveform, self.waveform_period, true)
+    }
+    /// Stops generating the waveform.
+    pub fn stop(&self) -> Result<()> {
+        self.task.stop()?;
+        self.download_waveform(&[0.; 2], Duration::from_micros(1), true)?;
+        self.task.stop()
+    }
+    fn download_waveform(
+        &self,
+        buffer: &[f64],
+        waveform_period: Duration,
+        auto_start: bool,
+    ) -> Result<()> {
         self.task.configure_sample_clock(
             "",
             buffer.len() as f64 / waveform_period.as_secs_f64(),
@@ -79,15 +104,7 @@ impl WaveGenTask {
             buffer.len() as u64,
         )?;
         self.task
-            .write_analog(buffer.len() as i32, false, -1., false, buffer)?;
+            .write_analog(buffer.len() as i32, auto_start, -1., false, buffer)?;
         Ok(())
-    }
-    /// Starts generating the waveform.
-    pub fn start(&self) -> Result<()> {
-        self.task.start()
-    }
-    /// Stops generating the waveform.
-    pub fn stop(&self) -> Result<()> {
-        self.task.stop()
     }
 }

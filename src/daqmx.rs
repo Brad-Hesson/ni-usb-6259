@@ -149,14 +149,14 @@ impl Task {
         Ok(num_read)
     }
     /// Writes multiple floating-point samples to a task that contains one or more analog output channels.
-    /// 
+    ///
     /// * `samples_per_channel`: The number of samples, per channel, to write. You must pass in a value of 0 or more in order for the sample to write. If you pass a negative number, this function returns an error.
     /// * `auto_start`: Specifies whether or not this function automatically starts the task if you do not start it.
     /// * `timeout`: The amount of time, in seconds, to wait for this function to write all the samples. To specify an infinite wait, pass -1. This function returns an error if the timeout elapses. A value of 0 indicates to try once to write the submitted samples. If this function successfully writes all submitted samples, it does not return an error. Otherwise, the function returns a timeout error and returns the number of samples actually written.
     /// * `interleave`: Specifies whether or not the samples are interleaved.
     /// * `buffer`: The buffer of 64-bit samples to write to the task.
     ///
-    /// This function returns the actual number of samples per channel successfully written to the buffer..
+    /// This function returns the actual number of samples per channel successfully written to the buffer.
     pub fn write_analog(
         &self,
         samples_per_channel: i32,
@@ -180,6 +180,23 @@ impl Task {
         }
         .check()?;
         Ok(samples_written)
+    }
+    /// Writes multiple floating-point samples to a task that contains one or more analog output channels.
+    ///
+    /// * `auto_start`: Specifies whether or not this function automatically starts the task if you do not start it.
+    /// * `timeout`: The amount of time, in seconds, to wait for this function to write all the samples. To specify an infinite wait, pass -1. This function returns an error if the timeout elapses. A value of 0 indicates to try once to write the submitted samples. If this function successfully writes all submitted samples, it does not return an error. Otherwise, the function returns a timeout error and returns the number of samples actually written.
+    /// * `value`: A 64-bit sample to write to the task.
+    pub fn write_analog_value(&self, auto_start: bool, timeout: f64, value: f64) -> Result<()> {
+        unsafe {
+            bindings::DAQmxWriteAnalogScalarF64(
+                self.handle,
+                auto_start as u32,
+                timeout,
+                value,
+                std::ptr::null_mut(),
+            )
+        }
+        .check()
     }
 }
 impl Drop for Task {
