@@ -134,10 +134,15 @@ impl Drop for Task {
 
 #[repr(i32)]
 pub enum TerminalConfig {
+    /// At run time, NI-DAQmx chooses the default terminal configuration for the channel.
     Default = bindings::DAQmx_Val_Cfg_Default,
+    /// Referenced single-ended mode
     RSE = bindings::DAQmx_Val_RSE as i32,
+    /// Non-referenced single-ended mode
     NRSE = bindings::DAQmx_Val_NRSE as i32,
+    /// Differential mode
     Diff = bindings::DAQmx_Val_Diff as i32,
+    /// Pseudodifferential mode
     PseudoDiff = bindings::DAQmx_Val_PseudoDiff as i32,
 }
 
