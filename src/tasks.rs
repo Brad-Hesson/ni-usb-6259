@@ -87,7 +87,7 @@ impl WaveGenTask {
     /// Stops generating the waveform.
     pub fn stop(&self) -> Result<()> {
         self.task.stop()?;
-        self.download_waveform(&[0.; 2], Duration::from_micros(1), true)?;
+        self.download_waveform(&[0.; 2], Duration::from_micros(10), true)?;
         self.task.stop()
     }
     fn download_waveform(
