@@ -435,7 +435,7 @@ pub enum Error {
     InvalidCalExcitVoltage = -201182,
     InvalidAIInputSrc = -201181,
     InvalidCalInputRef = -201180,
-    dBReferenceValueNotGreaterThanZero = -201179,
+    DBReferenceValueNotGreaterThanZero = -201179,
     SampleClockRateIsTooFastForSampleClockTiming = -201178,
     DeviceNotUsableUntilColdStart = -201177,
     SampleClockRateIsTooFastForBurstTiming = -201176,
