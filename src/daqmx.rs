@@ -1,7 +1,6 @@
 use std::ffi::CString;
 
-use crate::error::{ErrorValue, Error};
-
+use crate::error::{Error, ErrorValue};
 
 mod bindings {
     #![allow(non_upper_case_globals)]
@@ -17,18 +16,16 @@ pub struct Task {
 }
 impl Task {
     /// Creates a task.
-    /// 
+    ///
     /// * `name`: Name assigned to the task.
     pub fn new(name: impl AsRef<str>) -> Result<Self> {
         let name = CString::new(name.as_ref()).unwrap();
         let mut handle = 0 as bindings::TaskHandle;
-
         unsafe { bindings::DAQmxCreateTask(name.as_ptr(), &mut handle) }.check()?;
-
         Ok(Self { handle })
     }
     /// Creates channel(s) to measure voltage
-    /// 
+    ///
     ///  * `channel`: The names of the physical channels to use to create virtual channels. You can specify a list or range of physical channels.
     ///  * `name`: The name(s) to assign to the created virtual channel(s). If you do not specify a name, NI-DAQmx uses the physical channel name as the virtual channel name. If you specify your own names for nameToAssignToChannel, you must use the names when you refer to these channels in other NI-DAQmx functions. If you create multiple virtual channels with one call to this function, you can specify a list of names separated by commas. If you provide fewer names than the number of virtual channels you create, NI-DAQmx automatically assigns names to the virtual channels.
     ///  * `terminal_config`: The input terminal configuration for the channel.
@@ -44,13 +41,40 @@ impl Task {
     ) -> Result<()> {
         let channel = CString::new(channel.as_ref()).unwrap();
         let name = CString::new(name.as_ref()).unwrap();
-
         unsafe {
             bindings::DAQmxCreateAIVoltageChan(
                 self.handle,
                 channel.as_ptr(),
                 name.as_ptr(),
                 terminal_config as i32,
+                min_val,
+                max_val,
+                bindings::DAQmx_Val_Volts as i32,
+                &0,
+            )
+        }
+        .check()
+    }
+    /// Creates channel(s) to generate voltage.
+    ///
+    ///  * `channel`: The names of the physical channels to use to create virtual channels. You can specify a list or range of physical channels.
+    ///  * `name`: The name(s) to assign to the created virtual channel(s). If you do not specify a name, NI-DAQmx uses the physical channel name as the virtual channel name. If you specify your own names for nameToAssignToChannel, you must use the names when you refer to these channels in other NI-DAQmx functions. If you create multiple virtual channels with one call to this function, you can specify a list of names separated by commas. If you provide fewer names than the number of virtual channels you create, NI-DAQmx automatically assigns names to the virtual channels.
+    ///  * `min_val`: The minimum value, in units, that you expect to generate.
+    ///  * `max_val`: The maximum value, in units, that you expect to generate.
+    pub fn create_voltage_output_channel(
+        &self,
+        channel: impl AsRef<str>,
+        name: impl AsRef<str>,
+        min_val: f64,
+        max_val: f64,
+    ) -> Result<()> {
+        let channel = CString::new(channel.as_ref()).unwrap();
+        let name = CString::new(name.as_ref()).unwrap();
+        unsafe {
+            bindings::DAQmxCreateAOVoltageChan(
+                self.handle,
+                channel.as_ptr(),
+                name.as_ptr(),
                 min_val,
                 max_val,
                 bindings::DAQmx_Val_Volts as i32,
@@ -75,7 +99,6 @@ impl Task {
         samples_per_channel: u64,
     ) -> Result<()> {
         let source = CString::new(source.as_ref()).unwrap();
-
         unsafe {
             bindings::DAQmxCfgSampClkTiming(
                 self.handle,
@@ -91,13 +114,16 @@ impl Task {
     pub fn start(&self) -> Result<()> {
         unsafe { bindings::DAQmxStartTask(self.handle) }.check()
     }
+    pub fn stop(&self) -> Result<()> {
+        unsafe { bindings::DAQmxStopTask(self.handle) }.check()
+    }
     /// Reads multiple floating-point samples from a task that contains one or more analog input channels.
-    /// 
+    ///
     /// * `samples_per_channel`: The number of samples, per channel, to read. The default value of -1 reads all available samples. If `buffer` does not contain enough space, this function returns as many samples as fit in `buffer`. NI-DAQmx determines how many samples to read based on whether the task acquires samples continuously or acquires a finite number of samples. If the task acquires samples continuously and you set this parameter to -1, this function reads all the samples currently available in the buffer. If the task acquires a finite number of samples and you set this parameter to -1, the function waits for the task to acquire all requested samples, then reads those samples. If you set the Read All Available Samples property to TRUE, the function reads the samples currently available in the buffer and does not wait for the task to acquire all requested samples.
     /// * `timeout`: The amount of time, in seconds, to wait for the function to read the sample(s). To specify an infinite wait, pass -1. This function returns an error if the timeout elapses. A value of 0 indicates to try once to read the requested samples. If all the requested samples are read, the function is successful. Otherwise, the function returns a timeout error and returns the samples that were actually read.
     /// * `interleave`: Specifies whether or not the samples are interleaved.
     /// * `buffer`: The buffer to read samples into, organized according to `interleave`.
-    /// 
+    ///
     /// This function returns the actual number of samples read from each channel.
     pub fn read_analog(
         &self,
@@ -122,8 +148,38 @@ impl Task {
         .check()?;
         Ok(num_read)
     }
-    pub fn stop(&self) -> Result<()> {
-        unsafe { bindings::DAQmxStopTask(self.handle) }.check()
+    /// Writes multiple floating-point samples to a task that contains one or more analog output channels.
+    /// 
+    /// * `samples_per_channel`: The number of samples, per channel, to write. You must pass in a value of 0 or more in order for the sample to write. If you pass a negative number, this function returns an error.
+    /// * `auto_start`: Specifies whether or not this function automatically starts the task if you do not start it.
+    /// * `timeout`: The amount of time, in seconds, to wait for this function to write all the samples. To specify an infinite wait, pass -1. This function returns an error if the timeout elapses. A value of 0 indicates to try once to write the submitted samples. If this function successfully writes all submitted samples, it does not return an error. Otherwise, the function returns a timeout error and returns the number of samples actually written.
+    /// * `interleave`: Specifies whether or not the samples are interleaved.
+    /// * `buffer`: The buffer of 64-bit samples to write to the task.
+    ///
+    /// This function returns the actual number of samples per channel successfully written to the buffer..
+    pub fn write_analog(
+        &self,
+        samples_per_channel: i32,
+        auto_start: bool,
+        timeout: f64,
+        interleave: bool,
+        buffer: &[f64],
+    ) -> Result<i32> {
+        let mut samples_written = 0;
+        unsafe {
+            bindings::DAQmxWriteAnalogF64(
+                self.handle,
+                samples_per_channel,
+                auto_start as u32,
+                timeout,
+                interleave as u32,
+                buffer.as_ptr(),
+                &mut samples_written,
+                std::ptr::null_mut(),
+            )
+        }
+        .check()?;
+        Ok(samples_written)
     }
 }
 impl Drop for Task {
