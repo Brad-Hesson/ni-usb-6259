@@ -181,7 +181,7 @@ impl Task {
         .check()?;
         Ok(samples_written)
     }
-    /// Writes multiple floating-point samples to a task that contains one or more analog output channels.
+    /// Writes a floating-point value to a task that contains one or more analog output channels.
     ///
     /// * `auto_start`: Specifies whether or not this function automatically starts the task if you do not start it.
     /// * `timeout`: The amount of time, in seconds, to wait for this function to write all the samples. To specify an infinite wait, pass -1. This function returns an error if the timeout elapses. A value of 0 indicates to try once to write the submitted samples. If this function successfully writes all submitted samples, it does not return an error. Otherwise, the function returns a timeout error and returns the number of samples actually written.
