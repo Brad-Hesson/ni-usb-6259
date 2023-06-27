@@ -1,8 +1,7 @@
 use std::ffi::CString;
 
-use self::error::{Error, ErrorValue};
+use crate::error::{ErrorValue, Error};
 
-mod error;
 
 mod bindings {
     #![allow(non_upper_case_globals)]
