@@ -14,6 +14,8 @@ mod bindings {
 pub struct Task {
     handle: bindings::TaskHandle,
 }
+unsafe impl Send for Task {}
+unsafe impl Sync for Task {}
 impl Task {
     /// Creates a task.
     ///
