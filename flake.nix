@@ -16,10 +16,8 @@
         packages = [
           pkgs.bashInteractive
           pkgs.rustup
-          # pkgs.glibc_multi
-          # llvm.clang
         ];
-        # LIBCLANG_PATH = pkgs.lib.makeLibraryPath [ llvm.libclang.lib ];
+        LIBCLANG_PATH = pkgs.lib.makeLibraryPath [ llvm.libclang.lib ];
       };
     };
 }
