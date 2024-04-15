@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 num_enum = "0.6.1"
+thiserror = "1.0.58"
 tracing = "0.1.37"
 
 [build-dependencies]
