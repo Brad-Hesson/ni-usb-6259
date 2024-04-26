@@ -1,8 +1,8 @@
 use std::ffi::CString;
 
-use crate::error::{Error, ErrorValue};
+use crate::error::{Error, ErrorCoded};
 
-mod bindings {
+pub(crate) mod bindings {
     #![allow(non_upper_case_globals)]
     #![allow(non_camel_case_types)]
     #![allow(non_snake_case)]
@@ -23,7 +23,7 @@ impl Task {
     pub fn new(name: impl AsRef<str>) -> Result<Self> {
         let name = CString::new(name.as_ref()).unwrap();
         let mut handle = 0 as bindings::TaskHandle;
-        unsafe { bindings::DAQmxCreateTask(name.as_ptr(), &mut handle) }.check()?;
+        unsafe { bindings::DAQmxCreateTask(name.as_ptr(), &mut handle) }.check_code()?;
         Ok(Self { handle })
     }
     /// Creates channel(s) to measure voltage
@@ -55,7 +55,7 @@ impl Task {
                 &0,
             )
         }
-        .check()
+        .check_code()
     }
     /// Creates channel(s) to generate voltage.
     ///
@@ -83,7 +83,7 @@ impl Task {
                 &0,
             )
         }
-        .check()
+        .check_code()
     }
     /// Sets the source of the Sample Clock, the rate of the Sample Clock, and the number of samples to acquire or generate.
     ///
@@ -111,13 +111,13 @@ impl Task {
                 samples_per_channel,
             )
         }
-        .check()
+        .check_code()
     }
     pub fn start(&self) -> Result<()> {
-        unsafe { bindings::DAQmxStartTask(self.handle) }.check()
+        unsafe { bindings::DAQmxStartTask(self.handle) }.check_code()
     }
     pub fn stop(&self) -> Result<()> {
-        unsafe { bindings::DAQmxStopTask(self.handle) }.check()
+        unsafe { bindings::DAQmxStopTask(self.handle) }.check_code()
     }
     /// Reads multiple floating-point samples from a task that contains one or more analog input channels.
     ///
@@ -147,7 +147,7 @@ impl Task {
                 std::ptr::null_mut(),
             )
         }
-        .check()?;
+        .check_code()?;
         Ok(num_read)
     }
     /// Writes multiple floating-point samples to a task that contains one or more analog output channels.
@@ -180,7 +180,7 @@ impl Task {
                 std::ptr::null_mut(),
             )
         }
-        .check()?;
+        .check_code()?;
         Ok(samples_written)
     }
     /// Writes a floating-point value to a task that contains one or more analog output channels.
@@ -198,7 +198,7 @@ impl Task {
                 std::ptr::null_mut(),
             )
         }
-        .check()
+        .check_code()
     }
 }
 impl Drop for Task {
