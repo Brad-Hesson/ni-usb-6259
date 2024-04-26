@@ -138,8 +138,10 @@ impl WaveGenTask {
     /// Stops generating the waveform.
     pub fn stop(&self) -> Result<()> {
         self.task.stop()?;
-        self.download_waveform(&[0.; 2], Duration::from_micros(10), true)?;
-        self.task.stop()
+        self.task.write_analog_value(false, -1., 0.)?;
+        self.task.write_analog_value(true, -1., 0.)?;
+        self.task.stop()?;
+        Ok(())
     }
     fn download_waveform(
         &self,
