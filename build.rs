@@ -2,12 +2,15 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    let lib_folder = PathBuf::from("lib").canonicalize().unwrap();
+    let pwd_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
+    let lib_folder = PathBuf::from(pwd_dir).join("lib");
     let header_file = lib_folder.join("NIDAQmx.h");
 
-    println!("cargo:rustc-link-search={}", lib_folder.display());
+    println!("cargo:rustc-link-search={}", lib_folder.to_string_lossy());
+    #[cfg(target_family = "unix")]
+    println!("cargo:rustc-link-lib=dylib=nidaqmx");
+    #[cfg(target_family = "windows")]
     println!("cargo:rustc-link-lib=NIDAQmx");
-    println!("cargo:rerun-if-changed={}", header_file.display());
 
     let bindings = bindgen::Builder::default()
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
