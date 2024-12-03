@@ -14,7 +14,6 @@
     {
       devShells.${system}.default = pkgs.mkShell {
         packages = [
-          pkgs.bashInteractive
           pkgs.rustup
         ];
         LIBCLANG_PATH = pkgs.lib.makeLibraryPath [ llvm.libclang.lib ];
